@@ -10,7 +10,7 @@ CORS(app)
 
 
 def getDataFromDatabase():
-    laravel_api_url = "http://127.0.0.1:8000/api/get-data"
+    laravel_api_url = "https://predict-corn.silik-one.my.id/api/get-data"
 
     try:
         response = requests.get(laravel_api_url)
