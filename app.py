@@ -10,7 +10,7 @@ CORS(app)
 
 
 def getDataFromDatabase():
-    laravel_api_url = "https://predict-corn.silik-one.my.id/api/get-data"
+    laravel_api_url = "http://127.0.0.1:8000/api/get-data"
 
     try:
         response = requests.get(laravel_api_url)
@@ -34,9 +34,9 @@ def predict():
         dataset.append(
             {
                 "key": data["Tahun"],
-                "value": float(data["Produksi"]),
-                "luas_tanam": float(data["Area_Lahan"]),
-                "luas_panen": float(data["Area_Panen"]),
+                "value": data["Produksi"],
+                "luas_tanam": data["Area_Lahan"],
+                "luas_panen": data["Area_Panen"],
             }
         )
     min_val = min(v["value"] for v in dataset)
@@ -52,7 +52,7 @@ def predict():
     engine = FTS(
         dataset,
         luas_tanam,
-        luas_panen,  # Sertakan luas_tanam dan luas_panen
+        luas_panen,
         {
             "minMargin": min_border,
             "maxMargin": max_border,
@@ -65,8 +65,8 @@ def predict():
     actual = [v["value"] for v in singleResult[1:]]
     mse = mean_squared_error(actual, forecasted)
     afer = average_forecasting_error_rate(actual, forecasted)
-    print(singleResult)
-    print({"mse": mse, "afer": afer})
+    # print(singleResult)
+    # print({"mse": mse, "afer": afer})
 
     latest_data = dataset[-1]
     latest_value = latest_data["value"]
@@ -93,7 +93,7 @@ def predict():
         "data_train": singleResult,
         "prediction_results": prediction_results[-5:],
         "evaluation_metrics": {
-            "mse": f"{mse_percentage:.2f}%",
+            "mse": mse,
             "afer": afer_percentage,
         },
     }

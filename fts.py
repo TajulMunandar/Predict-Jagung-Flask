@@ -13,7 +13,6 @@ class FTS:
         self._dataset = dataset
         self._luas_tanam = luas_tanam
         self._luas_panen = luas_panen
-        # Sisipkan opsi untuk margin, interval, dan fitur lainnya
         self._margin_multiplier = options.get("marginMultiplier", 0.1)
         self._min_margin = options.get(
             "minMargin", self.min_value * self._margin_multiplier
@@ -41,10 +40,11 @@ class FTS:
             )
             max_point = self.lower_bound + (self._partition_interval * i)
             next_point = self.lower_bound + (self._partition_interval * (i + 1))
+
             self._partition_ref.append(
                 FuzzyTriangleGate(prev_point, max_point, next_point)
             )
-            self._ruleset[i] = set()
+            self._ruleset[i] = []
 
     @property
     def lower_bound(self) -> float:
@@ -84,7 +84,7 @@ class FTS:
             luas_tanam = self._luas_tanam[i]
             luas_panen = self._luas_panen[i]
 
-            self._ruleset[precedent].add((consequent, luas_tanam, luas_panen))
+            self._ruleset[precedent].append((consequent, luas_tanam, luas_panen))
 
     def test(self, options: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         base_data = (
@@ -99,39 +99,48 @@ class FTS:
             luas_tanam = self._luas_tanam[i]
             luas_panen = self._luas_panen[i]
 
-            # Menggunakan informasi luas tanam dan luas panen dari waktu sebelumnya
-            if i > 0:
-                previous_luas_tanam = self._luas_tanam[i - 1]
-                previous_luas_panen = self._luas_panen[i - 1]
-
             partition_index = self.nearest_partition(value)
-            partition_consequent = self._ruleset.get(partition_index, set())
-            predicted_value = 0
+            partition_rules = self._ruleset.get(partition_index, [])
 
-            if len(partition_consequent) == 0:
+            if not partition_rules:
                 predicted_value = self._partition_ref[partition_index].median
             else:
-                # Hitung nilai prediksi berdasarkan luas tanam dan luas panen yang dimasukkan
-                total_weighted_sum = sum(
-                    self._partition_ref[x[0]].median * (x[1] + x[2]) / 2
-                    for x in partition_consequent
-                )
-                total_weight = sum((x[1] + x[2]) / 2 for x in partition_consequent)
+                weighted_sum = 0
+                total_weight = 0
 
-                # Memperhitungkan pengaruh luas tanam dan luas panen dari waktu sebelumnya
-                if previous_luas_tanam is not None and previous_luas_panen is not None:
-                    predicted_value += (previous_luas_tanam + previous_luas_panen) / 2
+                for rule in partition_rules:
+                    consequent_value = self._partition_ref[rule[0]].median
+                    weight = (rule[1] + rule[2]) / 2
+                    weighted_sum += consequent_value * weight
+                    total_weight += weight
 
-                # Memperhitungkan pengaruh luas tanam dan luas panen saat ini
-                predicted_value += (luas_tanam + luas_panen) / 2
+                predicted_value = weighted_sum / total_weight #predict value
 
-                predicted_value += (
-                    total_weighted_sum / total_weight if total_weight != 0 else 0
-                )
+            # Consider the influence of previous luas_tanam and luas_panen
+            print(f"{ i }. hasil Prediksi awal: {predicted_value}")
+            print("total_weight", total_weight)
+            print("total weighted sum", weighted_sum)
+
+            print("value", value)
+
+            print(
+                "hasil Prediksi sebelum",
+                predicted_value,
+            )
+            print("luas panen =", luas_panen, "luas tanam =", luas_tanam)
+            total_variable = (luas_tanam + luas_panen) / 2
+            predicted_value += total_variable
+            print(
+                "total variable",
+                total_variable,
+            )
+            print(
+                "hasil Prediksi sesudah",
+                predicted_value,
+            )
 
             predicted.append({"key": key, "value": value, "predicted": predicted_value})
 
-            # Perbarui nilai luas tanam dan luas panen dari waktu sebelumnya
             previous_luas_tanam = luas_tanam
             previous_luas_panen = luas_panen
 
