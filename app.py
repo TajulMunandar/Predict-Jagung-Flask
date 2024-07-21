@@ -34,9 +34,9 @@ def predict():
         dataset.append(
             {
                 "key": data["Tahun"],
-                "value": data["Produksi"],
-                "luas_tanam": data["Area_Lahan"],
-                "luas_panen": data["Area_Panen"],
+                "value": float(data["Produksi"]),  # Konversi ke float
+                "luas_tanam": float(data["Area_Lahan"]),  # Konversi ke float
+                "luas_panen": float(data["Area_Panen"]),  # Konversi ke float
             }
         )
     min_val = min(v["value"] for v in dataset)
