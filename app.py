@@ -14,7 +14,7 @@ CORS(app)
 
 
 def getDataFromDatabase():
-    laravel_api_url = "https://predict-corn.silik-one.my.id/api/get-data"
+    laravel_api_url = "https://predict.sirehatcerdas.online/api/get-data"
 
     try:
         response = requests.get(laravel_api_url)
